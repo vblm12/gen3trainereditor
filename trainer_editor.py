@@ -111,13 +111,6 @@ def get_trainers(parties):
                 trainer = Trainer()
             elif tokens[0][0] == '[':
                 trainer.identifier = tokens[0].lstrip('[').rstrip(']')
-#            elif tokens[0] == '.partyFlags':
-#                party_flags = []
-#                for token in tokens[2:]:
-#                    if token == '|':
-#                        continue
-#                    party_flags.append(token.rstrip(','))
-#                trainer.party_flags = party_flags
             elif tokens[0] == '.trainerClass':
                 trainer.trainer_class = tokens[-1].rstrip(',')
             elif tokens[0] == '.encounterMusic_gender':
