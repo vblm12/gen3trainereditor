@@ -208,6 +208,33 @@ def write_parties_header(parties):
             else:
                 print('};\n', file=f)
 
+@Gtk.Template.from_file('searchable_popover.ui')
+class SearchablePopover(Gtk.Popover):
+    __gtype_name__ = 'SearchablePopover'
+    search_entry = Gtk.Template.Child()
+    list_box = Gtk.Template.Child()
+    grid = Gtk.Template.Child()
+    search_string = ""
+
+    def __init__(self, width = 200, height = 400):
+        super().__init__()
+        self.set_size_request(width, height)
+        self.list_box.set_filter_func(self.filter_row)
+
+    def add_item(self, label):
+        label = Gtk.Label.new(label)
+        self.list_box.insert(label, -1)
+        label.show()
+
+    @Gtk.Template.Callback('on_search')
+    def on_search(self, entry):
+        self.search_string = entry.get_text()
+        self.list_box.invalidate_filter()
+
+    def filter_row(self, row):
+        return self.search_string.upper() in row.get_children()[0].get_text()
+
+
 class Editor:
     items = {
         'ITEM_POTION': 'Potion',
@@ -222,8 +249,8 @@ class Editor:
         builder = Gtk.Builder()
         builder.add_from_file('editor.ui')
 
-        for widget in ['window', 'save_button', 'trainer_name_button',
-                       'trainer_name_label', 'identifier_entry', 'class_button',
+        for widget in ['window', 'save_button', 'choose_trainer_button',
+                       'choose_trainer_label', 'identifier_entry', 'class_button',
                        'class_label', 'music_button', 'music_label',
                        'sprite_button', 'sprite_label', 'double_battle_switch',
                        'check_bad_move_switch', 'check_viability_switch', 'setup_first_turn_switch',
@@ -234,16 +261,18 @@ class Editor:
                        'mon_button3', 'mon_label3', 'mon_button4',
                        'mon_label4', 'mon_button5', 'mon_label5',
                        'mon_button6', 'mon_label6', 'trainer_list_box',
-                       'trainer_search_entry', 'try_to_faint_switch', 'trainer_name_entry_main',
+                       'try_to_faint_switch', 'trainer_name_entry_main',
                        'risky_switch', 'item_popover', 'item_list_box']:
             setattr(self, widget, builder.get_object(widget))
 
+        self.trainer_popover = SearchablePopover(300, 450)
+        self.trainer_popover.list_box.connect('row-activated', self.on_trainer_row_activated)
+        self.choose_trainer_button.set_popover(self.trainer_popover)
+        self.trainer_popover.set_relative_to(self.choose_trainer_button)
         for trainer in self.trainers:
             if trainer == 'TRAINER_NONE':
                 continue
-            label = Gtk.Label.new(trainer)
-            self.trainer_list_box.insert(label, -1)
-            label.show()
+            self.trainer_popover.add_item(trainer)
 
         for item in self.items:
             label = Gtk.Label.new(self.items[item])
@@ -259,9 +288,6 @@ class Editor:
         write_parties_header(self.parties)
         write_opponents_header(self.trainers)
         write_trainers_header(self.trainers, self.parties)
-
-    def on_trainer_search(self, data):
-        regex = re.compile(self.trainer_search_entry.get_text())
 
     def on_new_trainer_clicked(self, data):
         pass
