@@ -7,25 +7,58 @@ class Party:
     def add_mon(self, mon):
         self.mons.append(mon)
 
+    def mons_have_items(self):
+        if not hasattr(self, 'mons'):
+            return False
+        for mon in self.mons:
+            if mon.has_item():
+                return True
+        return False
+
+    def mons_have_moves(self):
+        if not hasattr(self, 'mons'):
+            return False
+        for mon in self.mons:
+            if mon.has_moves():
+                return True
+        return False
+
+
 class Trainer:
     def get_ai_flags(self):
         flags = ''
         if self.check_bad_move:
-            flags += 'AI_SCRIPT_CHECK_BAD_MOVE'
+            flags += 'AI_SCRIPT_CHECK_BAD_MOVE | '
         if self.try_to_faint:
-            flags += ' | AI_SCRIPT_TRY_TO_FAINT'
+            flags += 'AI_SCRIPT_TRY_TO_FAINT | '
         if self.check_viability:
-            flags += ' | AI_SCRIPT_CHECK_VIABILITY'
+            flags += 'AI_SCRIPT_CHECK_VIABILITY | '
         if self.setup_first_turn:
-            flags += ' | AI_SCRIPT_SETUP_FIRST_TURN'
+            flags += 'AI_SCRIPT_SETUP_FIRST_TURN'
         if self.risky:
-            flags += ' | AI_SCRIPT_RISKY'
+            flags += 'AI_SCRIPT_RISKY'
         if flags == '':
             flags += '0'
-        return flags
+        return flags.rstrip(' |')
+
+    def get_party_flags(self):
+        if self.party == None:
+            return '0'
+        flags = ''
+        if self.party.mons_have_items():
+            flags += 'F_TRAINER_PARTY_HELD_ITEM | '
+        if self.party.mons_have_moves():
+            flags += 'F_TRAINER_PARTY_CUSTOM_MOVESET'
+        if flags == '':
+            flags = '0'
+        return flags.rstrip(' |')
 
 class Mon:
-    pass
+    def has_moves(self):
+        return hasattr(self, 'moves')
+
+    def has_item(self):
+        return hasattr(self, 'heldItem')
 
 def parse_party(lines):
     party = Party()
@@ -63,7 +96,7 @@ def get_parties():
                 party_lines.append(line.rstrip('\n'))
     return parties
 
-def get_trainers():
+def get_trainers(parties):
     trainers = {}
     trainer = Trainer()
     with open('src/data/trainers.h') as f:
@@ -78,13 +111,13 @@ def get_trainers():
                 trainer = Trainer()
             elif tokens[0][0] == '[':
                 trainer.identifier = tokens[0].lstrip('[').rstrip(']')
-            elif tokens[0] == '.partyFlags':
-                party_flags = []
-                for token in tokens[2:]:
-                    if token == '|':
-                        continue
-                    party_flags.append(token.rstrip(','))
-                trainer.party_flags = party_flags
+#            elif tokens[0] == '.partyFlags':
+#                party_flags = []
+#                for token in tokens[2:]:
+#                    if token == '|':
+#                        continue
+#                    party_flags.append(token.rstrip(','))
+#                trainer.party_flags = party_flags
             elif tokens[0] == '.trainerClass':
                 trainer.trainer_class = tokens[-1].rstrip(',')
             elif tokens[0] == '.encounterMusic_gender':
@@ -124,7 +157,11 @@ def get_trainers():
                 trainer.setup_first_turn = True if 'AI_SCRIPT_SETUP_FIRST_TURN' in ai_flags else False
                 trainer.risky = True if 'AI_SCRIPT_RISKY' in ai_flags else False
             elif tokens[0] == '.party':
-                trainer.party = tokens[-1].rstrip('},')
+                party_id = tokens[-1].rstrip('},')
+                if party_id != "NULL":
+                    trainer.party = parties[party_id]
+                else:
+                    trainer.party = None
     return trainers
 
 def flags_to_string(flags):
@@ -157,13 +194,13 @@ def array_text_generator(items):
             string += item + ', '
     return string
 
-def write_trainers_header(trainers, parties):
+def write_trainers_header(trainers):
     with open('src/data/trainers.h', 'w') as f:
         print('const struct Trainer gTrainers[] = {', file=f)
         for count, trainer in enumerate(trainers.values(), start=1):
             print('    [{}] ='.format(trainer.identifier), file=f)
             print('    {', file=f)
-            print('        .partyFlags = {},'.format(flags_to_string(trainer.party_flags)), file=f)
+            print('        .partyFlags = {},'.format(trainer.get_party_flags()), file=f)
             print('        .trainerClass = {},'.format(trainer.trainer_class), file=f)
             print('        .encounterMusic_gender = {},'.format(flags_to_string(trainer.encounter_music_gender)), file=f)
             print('        .trainerPic = {},'.format(trainer.trainer_pic), file=f)
@@ -174,11 +211,11 @@ def write_trainers_header(trainers, parties):
                 print('        .items = {{{}}},'.format(array_text_generator(trainer.items)), file=f)
             print('        .doubleBattle = {},'.format("TRUE" if trainer.double_battle else "FALSE"), file=f)
             print('        .aiFlags = {},'.format(trainer.get_ai_flags()), file=f)
-            print('        .partySize = {},'.format('0' if trainer.identifier == 'TRAINER_NONE' else 'ARRAY_COUNT({})'.format(trainer.party)), file=f)
+            print('        .partySize = {},'.format('0' if trainer.identifier == 'TRAINER_NONE' else 'ARRAY_COUNT({})'.format(trainer.party.identifier)), file=f)
             if trainer.identifier == 'TRAINER_NONE':
                 print('        .party = {.NoItemDefaultMoves = NULL},', file=f)
             else:
-                print('        .party = {{.{} = {}}},'.format(parties[trainer.party].party_type, trainer.party), file=f)
+                print('        .party = {{.{} = {}}},'.format(trainer.party.party_type, trainer.party.identifier), file=f)
             print('    },', file=f)
             if count != len(trainers):
                 print(file=f)
@@ -241,8 +278,8 @@ class Editor:
         'ITEM_FULL_RESTORE': 'Full Restore'
     }
     def __init__(self):
-        self.trainers = get_trainers()
         self.parties = get_parties()
+        self.trainers = get_trainers(self.parties)
         self.current_trainer = None
         builder = Gtk.Builder()
         builder.add_from_file('editor.ui')
@@ -285,7 +322,7 @@ class Editor:
     def on_save(self, data):
         write_parties_header(self.parties)
         write_opponents_header(self.trainers)
-        write_trainers_header(self.trainers, self.parties)
+        write_trainers_header(self.trainers)
 
     def on_new_trainer_clicked(self, data):
         pass
@@ -312,7 +349,7 @@ class Editor:
     def on_trainer_row_activated(self, box, row):
         self.current_trainer = row.get_children()[0].get_text()
         trainer = self.trainers[self.current_trainer]
-        party = self.parties[trainer.party]
+        party = self.parties[trainer.party.identifier]
         self.trainer_name_entry_main.set_text(trainer.name)
         self.identifier_entry.set_text(trainer.identifier)
         self.class_label.set_text(trainer.trainer_class)
