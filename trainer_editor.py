@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-import re
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
-import textwrap
 
 class Party:
     def add_mon(self, mon):
