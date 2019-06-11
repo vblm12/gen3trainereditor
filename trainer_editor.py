@@ -471,7 +471,7 @@ class Editor:
                        'mon_button3', 'mon_label3', 'mon_button4',
                        'mon_label4', 'mon_button5', 'mon_label5',
                        'mon_button6', 'mon_label6', 'trainer_list_box',
-                       'try_to_faint_switch', 'trainer_name_entry_main',
+                       'try_to_faint_switch', 'trainer_name_entry',
                        'risky_switch', 'item_popover', 'item_list_box']:
             setattr(self, widget, builder.get_object(widget))
 
@@ -550,7 +550,7 @@ class Editor:
     def set_current_trainer(self, trainer):
         self.current_trainer = trainer
         party = self.current_trainer.party
-        self.trainer_name_entry_main.set_text(self.current_trainer.name)
+        self.trainer_name_entry.set_text(self.current_trainer.name)
         self.identifier_entry.set_text(self.current_trainer.identifier)
         self.class_label.set_text(self.current_trainer.trainer_class)
         #self.music_label.set_text(trainer.encounter_music_gender)
@@ -579,6 +579,9 @@ class Editor:
 
     def on_trainer_row_activated(self, box, row):
         self.set_current_trainer(self.trainers[row.get_children()[0].get_text()])
+
+    def on_trainer_name_entry_changed(self, entry):
+        self.current_trainer.name = entry.get_text()
 
     def on_item_list_box_row_activated(self, box, row):
         item_text = row.get_children()[0].get_text()
