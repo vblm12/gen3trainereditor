@@ -2,253 +2,6 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
-  <object class="GtkPopover">
-    <property name="can_focus">False</property>
-    <child>
-      <object class="GtkGrid">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="margin_left">12</property>
-        <property name="margin_right">12</property>
-        <property name="margin_top">12</property>
-        <property name="margin_bottom">12</property>
-        <property name="column_homogeneous">True</property>
-        <child>
-          <object class="GtkGrid">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="margin_bottom">6</property>
-            <property name="column_homogeneous">True</property>
-            <child>
-              <object class="GtkLabel">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="halign">end</property>
-                <property name="margin_right">12</property>
-                <property name="label" translatable="yes">Species</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkMenuButton" id="mon_species_button">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <child>
-                  <object class="GtkLabel" id="mon_species_label">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Select Pokemon</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkGrid">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="halign">end</property>
-            <property name="margin_bottom">6</property>
-            <property name="column_homogeneous">True</property>
-            <child>
-              <object class="GtkLabel">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="halign">end</property>
-                <property name="margin_right">12</property>
-                <property name="label" translatable="yes">Level</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSpinButton" id="mon_level_spin_box">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="margin_right">10</property>
-                <property name="max_length">3</property>
-                <property name="xalign">1</property>
-                <property name="input_purpose">digits</property>
-                <property name="numeric">True</property>
-                <property name="update_policy">if-valid</property>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkGrid">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="margin_bottom">6</property>
-            <property name="column_homogeneous">True</property>
-            <child>
-              <object class="GtkLabel">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="halign">end</property>
-                <property name="margin_right">12</property>
-                <property name="label" translatable="yes">Held Item</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkMenuButton" id="mon_held_item_button">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <child>
-                  <object class="GtkLabel" id="mon_held_item_label">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Select Held Item</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">2</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkLabel">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="margin_bottom">6</property>
-            <property name="label" translatable="yes">&lt;span size="x-large"&gt;&lt;b&gt;Moves&lt;/b&gt;&lt;/span&gt;</property>
-            <property name="use_markup">True</property>
-          </object>
-          <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">3</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkGrid">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="row_homogeneous">True</property>
-            <property name="column_homogeneous">True</property>
-            <child>
-              <object class="GtkMenuButton" id="mon_move_button1">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="margin_right">6</property>
-                <property name="margin_bottom">6</property>
-                <child>
-                  <object class="GtkLabel" id="mon_move_label1">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Select Move</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkMenuButton" id="mon_move_button2">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="margin_right">6</property>
-                <property name="margin_bottom">6</property>
-                <child>
-                  <object class="GtkLabel" id="mon_move_label2">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Select Move</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkMenuButton" id="mon_move_button3">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="margin_right">6</property>
-                <property name="margin_bottom">6</property>
-                <child>
-                  <object class="GtkLabel" id="mon_move_label3">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Select Move</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkMenuButton" id="mon_move_button">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="margin_right">6</property>
-                <property name="margin_bottom">6</property>
-                <child>
-                  <object class="GtkLabel" id="mon_move_label4">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Select Move</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">4</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-  </object>
   <object class="GtkPopover" id="item_popover">
     <property name="width_request">200</property>
     <property name="height_request">150</property>
@@ -276,6 +29,7 @@
                   <object class="GtkListBox" id="item_list_box">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <signal name="row-activated" handler="on_item_list_box_row_activated" swapped="no"/>
                   </object>
                 </child>
               </object>
@@ -355,6 +109,7 @@
                 <property name="receives_default">True</property>
                 <property name="margin_right">6</property>
                 <property name="margin_bottom">6</property>
+                <signal name="toggled" handler="on_mon_button_toggled" swapped="no"/>
                 <child>
                   <object class="GtkLabel" id="mon_label1">
                     <property name="visible">True</property>
@@ -375,6 +130,7 @@
                 <property name="receives_default">True</property>
                 <property name="margin_right">6</property>
                 <property name="margin_bottom">6</property>
+                <signal name="toggled" handler="on_mon_button_toggled" swapped="no"/>
                 <child>
                   <object class="GtkLabel" id="mon_label2">
                     <property name="visible">True</property>
@@ -394,6 +150,7 @@
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="margin_bottom">6</property>
+                <signal name="toggled" handler="on_mon_button_toggled" swapped="no"/>
                 <child>
                   <object class="GtkLabel" id="mon_label3">
                     <property name="visible">True</property>
@@ -414,6 +171,7 @@
                 <property name="receives_default">True</property>
                 <property name="margin_right">6</property>
                 <property name="margin_bottom">6</property>
+                <signal name="toggled" handler="on_mon_button_toggled" swapped="no"/>
                 <child>
                   <object class="GtkLabel" id="mon_label4">
                     <property name="visible">True</property>
@@ -434,6 +192,7 @@
                 <property name="receives_default">True</property>
                 <property name="margin_right">6</property>
                 <property name="margin_bottom">6</property>
+                <signal name="toggled" handler="on_mon_button_toggled" swapped="no"/>
                 <child>
                   <object class="GtkLabel" id="mon_label5">
                     <property name="visible">True</property>
@@ -453,6 +212,7 @@
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="margin_bottom">6</property>
+                <signal name="toggled" handler="on_mon_button_toggled" swapped="no"/>
                 <child>
                   <object class="GtkLabel" id="mon_label6">
                     <property name="visible">True</property>
@@ -663,7 +423,7 @@
                 <property name="can_focus">True</property>
                 <property name="halign">start</property>
                 <property name="margin_bottom">6</property>
-                <signal name="notify::active" handler="on_switch_activate" swapped="no"/>
+                <signal name="notify::active" handler="on_check_bad_move_switch_activate" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -676,7 +436,7 @@
                 <property name="can_focus">True</property>
                 <property name="halign">start</property>
                 <property name="margin_bottom">6</property>
-                <signal name="notify::active" handler="on_switch_activate" swapped="no"/>
+                <signal name="notify::active" handler="on_check_viability_switch_activate" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -689,7 +449,7 @@
                 <property name="can_focus">True</property>
                 <property name="halign">start</property>
                 <property name="margin_bottom">6</property>
-                <signal name="notify::active" handler="on_switch_activate" swapped="no"/>
+                <signal name="notify::active" handler="on_try_to_faint_switch_activate" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">3</property>
@@ -702,7 +462,7 @@
                 <property name="can_focus">True</property>
                 <property name="halign">start</property>
                 <property name="margin_bottom">6</property>
-                <signal name="notify::active" handler="on_switch_activate" swapped="no"/>
+                <signal name="notify::active" handler="on_setup_first_turn_switch_activate" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">3</property>
@@ -730,7 +490,7 @@
                   <object class="GtkSwitch" id="risky_switch">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <signal name="notify::active" handler="on_switch_activate" swapped="no"/>
+                    <signal name="notify::active" handler="on_risky_switch_activate" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -789,7 +549,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="halign">start</property>
-                <signal name="notify::active" handler="on_switch_activate" swapped="no"/>
+                <signal name="notify::active" handler="on_double_battle_switch_activate" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>

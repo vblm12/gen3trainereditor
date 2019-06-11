@@ -2,15 +2,34 @@
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+import sys
 
 class Party:
+    def __init__(self):
+        self.mons = [None, None, None, None, None, None]
+        self._add_mon_index = 0
+
     def add_mon(self, mon):
-        self.mons.append(mon)
+        if self._add_mon_index == 6:
+            print('Programmer error. {} added too many mons'.format(self.identifier), file=sys.stderr)
+            sys.exit(1)
+        self.mons[self._add_mon_index] = mon
+        self._add_mon_index += 1
+
+    def set_mon(self, mon, position):
+        mons[position] = mon
+
+    def get_mons_compact(self):
+        mons = []
+        for mon in self.mons:
+            if mon is not None:
+                mons.append(mon)
+        return mons
 
     def mons_have_items(self):
         if not hasattr(self, 'mons'):
             return False
-        for mon in self.mons:
+        for mon in self.get_mons_compact():
             if mon.has_item():
                 return True
         return False
@@ -18,13 +37,47 @@ class Party:
     def mons_have_moves(self):
         if not hasattr(self, 'mons'):
             return False
-        for mon in self.mons:
+        for mon in self.get_mons_compact():
             if mon.has_moves():
                 return True
         return False
 
+    def revalidate_party(self):
+        has_moves = self.mons_have_moves()
+        has_items = self.mons_have_items()
+        move_string = 'CustomMoves' if has_moves else 'DefaultMoves'
+        item_string = 'Item' if has_items else 'NoItem'
+        self.party_type = item_string + move_string
+        for mon in self.mons:
+            if mon is None:
+                continue
+            if has_moves:
+                if not hasattr(mon, 'moves'):
+                    mon.moves = ['MOVE_NONE', 'MOVE_NONE', 'MOVE_NONE', 'MOVE_NONE']
+            if has_items:
+                if not hasattr(mon, 'heldItem'):
+                    mon.heldItem = 'ITEM_NONE'
 
 class Trainer:
+
+    def __init__(self):
+        self.items = [None, None, None, None]
+        self._add_item_index = 0
+
+    def add_item(self, item):
+        if self._add_item_index == 5:
+            print('Programmer error. {} added too many items'.format(self.identifier), file=sys.stderr)
+            sys.exit(1)
+        self.items[self._add_item_index] = item
+        self._add_item_index += 1
+
+    def get_items_compact(self):
+        items = []
+        for item in self.items:
+            if item is not None:
+                items.append(item)
+        return items
+
     def get_ai_flags(self):
         flags = ''
         if self.check_bad_move:
@@ -60,11 +113,18 @@ class Mon:
     def has_item(self):
         return hasattr(self, 'heldItem')
 
+    def set_move(self, move, position):
+        if not self.has_moves():
+            self.moves = ['MOVE_NONE', 'MOVE_NONE', 'MOVE_NONE', 'MOVE_NONE']
+        self.moves[position] = move
+
+    def add_item(self, item):
+        self.heldItem = item
+
 def parse_party(lines):
     party = Party()
     party.party_type = lines[0].split()[3][len('TrainerMon'):]
     party.identifier = lines[0].split()[4].rstrip('[]')
-    party.mons = []
     mon = Mon()
     for line in lines[2:]:
         tokens = line.split()
@@ -126,13 +186,10 @@ def get_trainers(parties):
                 trainer.name = line.split('"')[1]
             elif tokens[0] == '.items':
                 if tokens[-1] == '{},':
-                    trainer.items = []
                     continue
                 else:
-                    items = []
                     for token in tokens[2:]:
-                        items.append(token.lstrip('{').rstrip('},'))
-                    trainer.items = items
+                        trainer.add_item((token.lstrip('{').rstrip('},')))
             elif tokens[0] == '.doubleBattle':
                 if tokens[-1] == 'TRUE,':
                     trainer.double_battle = True
@@ -201,7 +258,7 @@ def write_trainers_header(trainers):
             if not hasattr(trainer, 'items'):
                 print('        .items = {{}},', file=f)
             else:
-                print('        .items = {{{}}},'.format(array_text_generator(trainer.items)), file=f)
+                print('        .items = {{{}}},'.format(array_text_generator(trainer.get_items_compact())), file=f)
             print('        .doubleBattle = {},'.format("TRUE" if trainer.double_battle else "FALSE"), file=f)
             print('        .aiFlags = {},'.format(trainer.get_ai_flags()), file=f)
             print('        .partySize = {},'.format('0' if trainer.identifier == 'TRAINER_NONE' else 'ARRAY_COUNT({})'.format(trainer.party.identifier)), file=f)
@@ -218,16 +275,16 @@ def write_parties_header(parties):
     with open('src/data/trainer_parties.h', 'w') as f:
         for count, party in enumerate(parties.values(), start=1):
             print('static const struct {} {}[] = {{'.format('TrainerMon{}'.format(party.party_type), party.identifier), file=f)
-            for mon_count, mon in enumerate(party.mons, start=1):
+            for mon_count, mon in enumerate(party.get_mons_compact(), start=1):
                 print('    {', file=f)
                 print('    .iv = {},'.format(mon.iv), file=f)
                 print('    .lvl = {},'.format(mon.lvl), file=f)
                 print('    .species = {},'.format(mon.species), file=f)
-                if hasattr(mon, 'heldItem'):
-                    print('    .heldItem = {}{}'.format(mon.heldItem, ',' if hasattr(mon, 'moves') else ''), file=f)
-                if hasattr(mon, 'moves'):
+                if mon.has_item():
+                    print('    .heldItem = {}{}'.format(mon.heldItem, ',' if mon.has_moves() else ''), file=f)
+                if mon.has_moves():
                     print('    .moves = {}'.format(array_text_generator(mon.moves)), file=f)
-                if mon_count == len(party.mons):
+                if mon_count == len(party.get_mons_compact()):
                     print('    }', file=f)
                 else:
                     print('    },', file=f)
@@ -236,12 +293,11 @@ def write_parties_header(parties):
             else:
                 print('};\n', file=f)
 
-@Gtk.Template.from_file('searchable_popover.ui')
-class SearchablePopover(Gtk.Popover):
-    __gtype_name__ = 'SearchablePopover'
+@Gtk.Template.from_file('searchable_list.ui')
+class SearchableList(Gtk.Grid):
+    __gtype_name__ = 'SearchableList'
     search_entry = Gtk.Template.Child()
     list_box = Gtk.Template.Child()
-    grid = Gtk.Template.Child()
     search_string = ""
 
     def __init__(self, width = 200, height = 400):
@@ -249,8 +305,8 @@ class SearchablePopover(Gtk.Popover):
         self.set_size_request(width, height)
         self.list_box.set_filter_func(self.filter_row)
 
-    def add_item(self, label):
-        label = Gtk.Label.new(label)
+    def add_item(self, text):
+        label = Gtk.Label.new(text)
         self.list_box.insert(label, -1)
         label.show()
 
@@ -262,13 +318,139 @@ class SearchablePopover(Gtk.Popover):
     def filter_row(self, row):
         return self.search_string.upper() in row.get_children()[0].get_text()
 
+@Gtk.Template.from_file('pokemon_panel.ui')
+class PokemonPanel(Gtk.Popover):
+    __gtype_name__ = 'PokemonPanel'
+    pokemon_grid = Gtk.Template.Child()
+    species_button = Gtk.Template.Child()
+    level_spin_box = Gtk.Template.Child()
+    iv_spin_box = Gtk.Template.Child()
+    held_item_button = Gtk.Template.Child()
+    move_button1 = Gtk.Template.Child()
+    move_button2 = Gtk.Template.Child()
+    move_button3 = Gtk.Template.Child()
+    move_button4 = Gtk.Template.Child()
+
+    def __init__(self):
+        super().__init__()
+        self.active_button = None
+        self.move_buttons = []
+        self.mon = None
+        for i in range(1,5):
+            self.move_buttons.append(getattr(self, 'move_button{}'.format(i)))
+        self.iv_spin_box.set_range(0, 255)
+        self.level_spin_box.set_range(1,100)
+
+        self.pokemon_searchable = SearchableList()
+        with open('include/constants/species.h') as f:
+            for line in f:
+                if '#define SPECIES' in line:
+                    tokens = line.split()
+                    self.pokemon_searchable.add_item(tokens[1])
+                    if tokens[1] == 'SPECIES_CELEBI':
+                        break
+        self.pokemon_searchable.list_box.connect('row-activated', self.on_mon_selected)
+
+        self.held_item_searchable = SearchableList()
+        with open('include/constants/items.h') as f:
+            for line in f:
+                if '#define ITEM' in line:
+                    tokens = line.split()
+                    self.held_item_searchable.add_item(tokens[1])
+        self.held_item_searchable.list_box.connect('row-activated', self.on_item_selected)
+
+        self.move_searchable = SearchableList()
+        with open('include/constants/moves.h') as f:
+            for line in f:
+                if '#define MOVE' in line:
+                    tokens = line.split()
+                    self.move_searchable.add_item(tokens[1])
+        self.move_searchable.list_box.connect('row-activated', self.on_move_selected)
+
+    @Gtk.Template.Callback('on_move_clicked')
+    def on_move_clicked(self, button):
+        self.active_button = button
+        self.remove(self.pokemon_grid)
+        self.add(self.move_searchable)
+
+    @Gtk.Template.Callback('on_species_clicked')
+    def on_species_clicked(self, button):
+        self.remove(self.pokemon_grid)
+        self.add(self.pokemon_searchable)
+
+    @Gtk.Template.Callback('on_held_item_clicked')
+    def on_held_item_clicked(self, button):
+        self.remove(self.pokemon_grid)
+        self.add(self.held_item_searchable)
+
+    @Gtk.Template.Callback('on_level_set')
+    def on_level_set(self, button):
+        if self.mon is not None:
+            self.mon.lvl = int(button.get_value())
+
+    @Gtk.Template.Callback('on_iv_set')
+    def on_held_iv_set(self, button):
+        if self.mon is not None:
+            self.mon.iv = int(button.get_value())
+
+    def on_move_selected(self, box, row):
+        for i in range(0,4):
+            if self.active_button is self.move_buttons[i]:
+                move = row.get_children()[0].get_text()
+                self.active_button.set_label(move)
+                self.active_button = None
+                self.mon.set_move(move, i)
+        self.remove(self.move_searchable)
+        self.add(self.pokemon_grid)
+
+    def on_mon_selected(self, box, row):
+        species = row.get_children()[0].get_text()
+        self.mon.species = species
+        self.species_button.set_label(species)
+        self.remove(self.pokemon_searchable)
+        self.add(self.pokemon_grid)
+
+    def on_item_selected(self, box, row):
+        item = row.get_children()[0].get_text()
+        self.mon.heldItem = item
+        self.held_item_button.set_label(item)
+        self.remove(self.held_item_searchable)
+        self.add(self.pokemon_grid)
+
+    def set_mon(self, mon = None):
+        self.mon = mon
+        if mon is None:
+            self.species_button.set_label('Select Species')
+            self.iv_spin_box.set_value(0)
+            self.level_spin_box.set_value(1)
+            self.held_item_button.set_label('Select Item')
+            for i in range(0, 4):
+                self.move_buttons[i].set_label('Select Move')
+        else:
+            self.iv_spin_box.set_value(int(mon.iv))
+            self.level_spin_box.set_value(int(mon.lvl))
+            self.species_button.set_label(mon.species)
+            if mon.has_item():
+                self.held_item_button.set_label(mon.heldItem)
+            for i in range(0, 4):
+                button = self.move_buttons[i]
+                if not mon.has_moves():
+                    button.set_label('Select Move')
+                else:
+                    if mon.moves[i] == 'MOVE_NONE':
+                        button.set_label('Select Move')
+                    else:
+                        button.set_label(mon.moves[i])
+
+    def on_hide(self, data):
+        self.set_mon()
 
 class Editor:
     items = {
-        'ITEM_POTION': 'Potion',
-        'ITEM_SUPER_POTION': 'Super Potion',
-        'ITEM_HYPER_POTION': 'Hyper Potion',
-        'ITEM_FULL_RESTORE': 'Full Restore'
+        'Potion': 'ITEM_POTION',
+        'Super Potion': 'ITEM_SUPER_POTION',
+        'Hyper Potion': 'ITEM_HYPER_POTION',
+        'Full Restore': 'ITEM_FULL_RESTORE'
     }
     def __init__(self):
         self.parties = get_parties()
@@ -293,21 +475,38 @@ class Editor:
                        'risky_switch', 'item_popover', 'item_list_box']:
             setattr(self, widget, builder.get_object(widget))
 
-        self.trainer_popover = SearchablePopover(300, 450)
-        self.trainer_popover.list_box.connect('row-activated', self.on_trainer_row_activated)
+        self.trainer_popover = Gtk.Popover()
+        self.trainer_searchable = SearchableList(300, 450)
+        self.trainer_searchable.list_box.connect('row-activated', self.on_trainer_row_activated)
+        self.trainer_popover.add(self.trainer_searchable)
         self.choose_trainer_button.set_popover(self.trainer_popover)
         self.trainer_popover.set_relative_to(self.choose_trainer_button)
+
         for trainer in self.trainers:
             if trainer == 'TRAINER_NONE':
                 continue
-            self.trainer_popover.add_item(trainer)
+            self.trainer_searchable.add_item(trainer)
 
-        for item in self.items:
-            label = Gtk.Label.new(self.items[item])
+        for item in self.items.keys():
+            label = Gtk.Label.new(item)
             self.item_list_box.insert(label, -1)
             label.show()
 
+        self.pokemon_panel = PokemonPanel()
+
+        self.mon_buttons = []
+        for i in range(1,7):
+            button = getattr(self, 'mon_button{}'.format(i))
+            button.set_popover(self.pokemon_panel)
+            self.mon_buttons.append(button)
+        self.item_buttons = []
+        for i in range(1,5):
+            button = getattr(self, 'item_button{}'.format(i))
+            self.item_buttons.append(button)
+
         builder.connect_signals(self)
+        key = list(self.trainers.keys())[1]
+        self.set_current_trainer(self.trainers[key])
 
     def on_quit(self, data):
         Gtk.main_quit()
@@ -320,54 +519,74 @@ class Editor:
     def on_new_trainer_clicked(self, data):
         pass
 
+    def on_mon_button_toggled(self, button):
+        if button.get_active():
+            for i, b in enumerate(self.mon_buttons):
+                if b is button:
+                    self.pokemon_panel.set_relative_to(b)
+                    self.pokemon_panel.set_mon(self.current_trainer.party.mons[i])
+        else:
+            for i, b in enumerate(self.mon_buttons):
+                if b is button:
+                    self.current_trainer.party.revalidate_party()
+
     def on_item_button_toggled(self, button):
         if button.get_active():
             self.item_popover.set_relative_to(button)
 
-    def on_switch_activate(self, switch, data):
-        trainer = self.trainers[self.current_trainer]
-        if switch == self.double_battle_switch:
-            trainer.double_battle = switch.get_active()
-        elif switch == self.check_bad_move_switch:
-            trainer.double_battle = switch.get_active()
-        elif switch == self.try_to_faint_switch:
-            trainer.double_battle = switch.get_active()
-        elif switch == self.check_viability_switch:
-            trainer.double_battle = switch.get_active()
-        elif switch == self.setup_first_turn_switch:
-            trainer.double_battle = switch.get_active()
-        elif switch == self.risky_switch:
-            trainer.risky = self.risky_switch.get_state()
+    def on_double_battle_switch_activate(self, switch, data):
+        self.current_trainer.double_battle = switch.get_active()
+    def on_check_bad_move_switch_activate(self, switch, data):
+        self.current_trainer.check_bad_move = switch.get_active()
+    def on_try_to_faint_switch_activate(self, switch, data):
+        self.current_trainer.try_to_faint = switch.get_active()
+    def on_check_viability_switch_activate(self, switch, data):
+        self.current_trainer.check_viability = switch.get_active()
+    def on_setup_first_turn_switch_activate(self, switch, data):
+        self.current_trainer.setup_first_turn = switch.get_active()
+    def on_risky_switch_activate(self, switch, data):
+        self.current_trainer.risky = switch.get_active()
 
-    def on_trainer_row_activated(self, box, row):
-        self.current_trainer = row.get_children()[0].get_text()
-        trainer = self.trainers[self.current_trainer]
-        party = self.parties[trainer.party.identifier]
-        self.trainer_name_entry_main.set_text(trainer.name)
-        self.identifier_entry.set_text(trainer.identifier)
-        self.class_label.set_text(trainer.trainer_class)
+    def set_current_trainer(self, trainer):
+        self.current_trainer = trainer
+        party = self.current_trainer.party
+        self.trainer_name_entry_main.set_text(self.current_trainer.name)
+        self.identifier_entry.set_text(self.current_trainer.identifier)
+        self.class_label.set_text(self.current_trainer.trainer_class)
         #self.music_label.set_text(trainer.encounter_music_gender)
-        self.sprite_label.set_text(trainer.trainer_pic)
-        self.double_battle_switch.set_active(trainer.double_battle)
+        self.sprite_label.set_text(self.current_trainer.trainer_pic)
+        self.double_battle_switch.set_active(self.current_trainer.double_battle)
 
-        self.check_bad_move_switch.set_active(trainer.check_bad_move)
-        self.try_to_faint_switch.set_active(trainer.try_to_faint)
-        self.check_viability_switch.set_active(trainer.check_viability)
-        self.setup_first_turn_switch.set_active(trainer.setup_first_turn)
+        self.check_bad_move_switch.set_active(self.current_trainer.check_bad_move)
+        self.try_to_faint_switch.set_active(self.current_trainer.try_to_faint)
+        self.check_viability_switch.set_active(self.current_trainer.check_viability)
+        self.setup_first_turn_switch.set_active(self.current_trainer.setup_first_turn)
 
-        if len(trainer.items) > 0:
-            for count, item in enumerate(trainer.items, start=1):
+        items = self.current_trainer.get_items_compact()
+        if len(items) > 0:
+            for count, item in enumerate(items, start=1):
                 getattr(self, 'item_label{}'.format(count)).set_text('Select Item' if item == "ITEM_NONE" else item)
         else:
             for i in range(1,5):
                 getattr(self, 'item_label{}'.format(i)).set_text('Select Item')
 
-        for i in range(1,5):
-            if i <= len(party.mons):
-                getattr(self, 'mon_label{}'.format(i)).set_text(party.mons[i-1].species)
+        for count, mon in enumerate(party.mons, start=1):
+            if mon is None:
+                getattr(self, 'mon_label{}'.format(count)).set_text('Select Pokemon')
             else:
-                getattr(self, 'mon_label{}'.format(i)).set_text('Select Pokemon')
+                getattr(self, 'mon_label{}'.format(count)).set_text(party.mons[count-1].species)
 
+
+    def on_trainer_row_activated(self, box, row):
+        self.set_current_trainer(self.trainers[row.get_children()[0].get_text()])
+
+    def on_item_list_box_row_activated(self, box, row):
+        item_text = row.get_children()[0].get_text()
+        for count, button in enumerate(self.item_buttons, start=1):
+            if button.get_active():
+                getattr(self, 'item_label{}'.format(count)).set_text(item_text)
+                self.current_trainer.items[count-1] = self.items[item_text]
+        self.item_popover.popdown()
 
 if __name__ == "__main__":
     editor = Editor()
