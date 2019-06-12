@@ -63,6 +63,15 @@ class Trainer:
     def __init__(self):
         self.items = [None, None, None, None]
         self._add_item_index = 0
+        self.trainer_class = 'TRAINER_CLASS_YOUNGSTER'
+        self.encounter_music_gender = ['TRAINER_PIC_YOUNGSTER']
+        self.trainer_pic = 'TRAINER_PIC_YOUNGSTER'
+        self.double_battle = False
+        self.check_bad_move = True
+        self.check_viability = True
+        self.try_to_faint = True
+        self.setup_first_turn = False
+        self.risky = False
 
     def add_item(self, item):
         if self._add_item_index == 5:
@@ -107,6 +116,11 @@ class Trainer:
         return flags.rstrip(' |')
 
 class Mon:
+    def __init__(self, species='SPECIES_NONE'):
+        self.iv = 0
+        self.lvl = 1
+        self.species = species
+
     def has_moves(self):
         return hasattr(self, 'moves')
 
@@ -298,6 +312,7 @@ class SearchableList(Gtk.Grid):
     __gtype_name__ = 'SearchableList'
     search_entry = Gtk.Template.Child()
     list_box = Gtk.Template.Child()
+    create_new_button = Gtk.Template.Child()
     search_string = ""
 
     def __init__(self, width = 200, height = 400):
@@ -309,6 +324,9 @@ class SearchableList(Gtk.Grid):
         label = Gtk.Label.new(text)
         self.list_box.insert(label, -1)
         label.show()
+
+    def show_button(self):
+        self.create_new_button.show()
 
     @Gtk.Template.Callback('on_search')
     def on_search(self, entry):
@@ -393,6 +411,12 @@ class PokemonPanel(Gtk.Popover):
         if self.mon is not None:
             self.mon.iv = int(button.get_value())
 
+    @Gtk.Template.Callback('on_hide')
+    def on_hide(self, popover):
+        if self.get_child() is not self.pokemon_grid:
+            self.remove(self.get_child())
+            self.add(self.pokemon_grid)
+
     def on_move_selected(self, box, row):
         for i in range(0,4):
             if self.active_button is self.move_buttons[i]:
@@ -405,7 +429,10 @@ class PokemonPanel(Gtk.Popover):
 
     def on_mon_selected(self, box, row):
         species = row.get_children()[0].get_text()
-        self.mon.species = species
+        if self.mon is None:
+            self.set_mon(Mon(species))
+        else:
+            self.mon.species = species
         self.species_button.set_label(species)
         self.remove(self.pokemon_searchable)
         self.add(self.pokemon_grid)
@@ -417,6 +444,13 @@ class PokemonPanel(Gtk.Popover):
         self.remove(self.held_item_searchable)
         self.add(self.pokemon_grid)
 
+    def set_widgets_sensitivity(self, sensitivity):
+            self.iv_spin_box.set_sensitive(sensitivity)
+            self.level_spin_box.set_sensitive(sensitivity)
+            self.held_item_button.set_sensitive(sensitivity)
+            for i in range(0, 4):
+                self.move_buttons[i].set_sensitive(sensitivity)
+
     def set_mon(self, mon = None):
         self.mon = mon
         if mon is None:
@@ -426,7 +460,9 @@ class PokemonPanel(Gtk.Popover):
             self.held_item_button.set_label('Select Item')
             for i in range(0, 4):
                 self.move_buttons[i].set_label('Select Move')
+            self.set_widgets_sensitivity(False)
         else:
+            self.set_widgets_sensitivity(True)
             self.iv_spin_box.set_value(int(mon.iv))
             self.level_spin_box.set_value(int(mon.lvl))
             self.species_button.set_label(mon.species)
@@ -442,8 +478,46 @@ class PokemonPanel(Gtk.Popover):
                     else:
                         button.set_label(mon.moves[i])
 
-    def on_hide(self, data):
-        self.set_mon()
+@Gtk.Template.from_file('new_trainer_dialog.ui')
+class NewTrainerDialog(Gtk.Dialog):
+    __gtype_name__ = 'NewTrainerDialog'
+    create_button = Gtk.Template.Child()
+    def __init__(self):
+        super().__init__()
+        self.reset()
+
+    def set_create_button_state(self):
+        self.create_button.set_sensitive(self.name and self.trainer_identifier and self.party_identifier)
+
+    @Gtk.Template.Callback('on_name_changed')
+    def on_name_changed(self, entry):
+        self.name = entry.get_text()
+        self.set_create_button_state()
+
+    @Gtk.Template.Callback('on_trainer_identifier_changed')
+    def on_trainer_identifier_changed(self, entry):
+        self.trainer_identifier = entry.get_text()
+        self.set_create_button_state()
+
+    @Gtk.Template.Callback('on_party_identifier_changed')
+    def on_party_identifier_changed(self, entry):
+        self.party_identifier = entry.get_text()
+        self.set_create_button_state()
+
+    @Gtk.Template.Callback('on_close')
+    def on_close(self, button):
+        self.response(Gtk.ResponseType.CANCEL)
+
+    @Gtk.Template.Callback('on_delete')
+    def on_delete(self, event, data):
+        self.hide()
+        return True
+
+    def reset(self):
+        self.name = ''
+        self.trainer_identifier = ''
+        self.party_identifier = ''
+        self.create_button.set_sensitive(False)
 
 class Editor:
     items = {
@@ -478,6 +552,8 @@ class Editor:
         self.trainer_popover = Gtk.Popover()
         self.trainer_searchable = SearchableList(300, 450)
         self.trainer_searchable.list_box.connect('row-activated', self.on_trainer_row_activated)
+        self.trainer_searchable.create_new_button.connect('clicked', self.on_create_new_button_clicked)
+        self.trainer_searchable.show_button()
         self.trainer_popover.add(self.trainer_searchable)
         self.choose_trainer_button.set_popover(self.trainer_popover)
         self.trainer_popover.set_relative_to(self.choose_trainer_button)
@@ -486,6 +562,9 @@ class Editor:
             if trainer == 'TRAINER_NONE':
                 continue
             self.trainer_searchable.add_item(trainer)
+
+        self.new_trainer_dialog = NewTrainerDialog()
+        self.new_trainer_dialog.set_transient_for(self.window)
 
         for item in self.items.keys():
             label = Gtk.Label.new(item)
@@ -508,6 +587,7 @@ class Editor:
         key = list(self.trainers.keys())[1]
         self.set_current_trainer(self.trainers[key])
 
+
     def on_quit(self, data):
         Gtk.main_quit()
 
@@ -528,6 +608,8 @@ class Editor:
         else:
             for i, b in enumerate(self.mon_buttons):
                 if b is button:
+                    self.current_trainer.party.mons[i] = self.pokemon_panel.mon
+                    button.get_child().set_text(self.pokemon_panel.mon.species)
                     self.current_trainer.party.revalidate_party()
 
     def on_item_button_toggled(self, button):
@@ -591,7 +673,27 @@ class Editor:
                 self.current_trainer.items[count-1] = self.items[item_text]
         self.item_popover.popdown()
 
-if __name__ == "__main__":
+    def on_create_new_button_clicked(self, button):
+        self.trainer_popover.popdown()
+        response = self.new_trainer_dialog.run()
+        self.new_trainer_dialog.hide()
+        if response == Gtk.ResponseType.APPLY:
+            trainer = Trainer()
+            trainer.identifier = self.new_trainer_dialog.trainer_identifier
+            trainer.name = self.new_trainer_dialog.name
+            trainer.party = Party()
+            trainer.party.identifier = self.new_trainer_dialog.party_identifier
+            self.parties[trainer.party.identifier] = trainer.party
+            self.trainers[trainer.identifier] = trainer
+            self.set_current_trainer(trainer)
+        else:
+            self.new_trainer_dialog.reset()
+            self.new_trainer_dialog.hide()
+
+def main():
     editor = Editor()
     Gtk.main()
+
+if __name__ == "__main__":
+    main()
 

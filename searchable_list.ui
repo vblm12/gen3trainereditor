@@ -39,6 +39,7 @@
               <object class="GtkListBox" id="list_box">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="margin_bottom">6</property>
               </object>
             </child>
           </object>
@@ -47,6 +48,17 @@
       <packing>
         <property name="left_attach">0</property>
         <property name="top_attach">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkButton" id="create_new_button">
+        <property name="label" translatable="yes">Create New</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">2</property>
       </packing>
     </child>
   </template>
