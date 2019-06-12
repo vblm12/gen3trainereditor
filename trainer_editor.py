@@ -661,6 +661,7 @@ class Editor:
 
     def on_trainer_row_activated(self, box, row):
         self.set_current_trainer(self.trainers[row.get_children()[0].get_text()])
+        self.trainer_popover.popdown()
 
     def on_trainer_name_entry_changed(self, entry):
         self.current_trainer.name = entry.get_text()
