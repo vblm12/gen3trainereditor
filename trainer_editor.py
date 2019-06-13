@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
+from gi.repository import Gtk, GdkPixbuf
+import glob
+import os.path
 import sys
 
 class Party:
@@ -318,12 +320,21 @@ class SearchableList(Gtk.Grid):
     def __init__(self, width = 200, height = 400):
         super().__init__()
         self.set_size_request(width, height)
-        self.list_box.set_filter_func(self.filter_row)
+        self.list_box.set_filter_func(self.filter_labels)
 
-    def add_item(self, text):
+    def add_label(self, text):
         label = Gtk.Label.new(text)
         self.list_box.insert(label, -1)
         label.show()
+
+    def add_sprites(self, sprites):
+        self.sprites = sprites
+        self.list_box.set_filter_func(self.filter_images)
+        for sprite in self.sprites:
+            image = Gtk.Image.new_from_pixbuf(self.sprites[sprite])
+            image.sprite_label = sprite
+            self.list_box.insert(image, -1)
+            image.show()
 
     def show_button(self):
         self.create_new_button.show()
@@ -333,7 +344,10 @@ class SearchableList(Gtk.Grid):
         self.search_string = entry.get_text()
         self.list_box.invalidate_filter()
 
-    def filter_row(self, row):
+    def filter_images(self, row):
+        return self.search_string.upper() in row.get_children()[0].sprite_label
+
+    def filter_labels(self, row):
         return self.search_string.upper() in row.get_children()[0].get_text()
 
 @Gtk.Template.from_file('pokemon_panel.ui')
@@ -364,7 +378,7 @@ class PokemonPanel(Gtk.Popover):
             for line in f:
                 if '#define SPECIES' in line:
                     tokens = line.split()
-                    self.pokemon_searchable.add_item(tokens[1])
+                    self.pokemon_searchable.add_label(tokens[1])
                     if tokens[1] == 'SPECIES_UNOWN_QMARK':
                         break
         self.pokemon_searchable.list_box.connect('row-activated', self.on_mon_selected)
@@ -374,7 +388,7 @@ class PokemonPanel(Gtk.Popover):
             for line in f:
                 if '#define ITEM' in line:
                     tokens = line.split()
-                    self.held_item_searchable.add_item(tokens[1])
+                    self.held_item_searchable.add_label(tokens[1])
         self.held_item_searchable.list_box.connect('row-activated', self.on_item_selected)
 
         self.move_searchable = SearchableList()
@@ -382,7 +396,7 @@ class PokemonPanel(Gtk.Popover):
             for line in f:
                 if '#define MOVE' in line:
                     tokens = line.split()
-                    self.move_searchable.add_item(tokens[1])
+                    self.move_searchable.add_label(tokens[1])
         self.move_searchable.list_box.connect('row-activated', self.on_move_selected)
 
     @Gtk.Template.Callback('on_move_clicked')
@@ -529,14 +543,14 @@ class Editor:
     def __init__(self):
         self.parties = get_parties()
         self.trainers = get_trainers(self.parties)
-        self.current_trainer = None
+        self.load_sprite_list()
+
         builder = Gtk.Builder()
         builder.add_from_file('editor.ui')
-
         for widget in ['window', 'save_button', 'choose_trainer_button',
                        'choose_trainer_label', 'identifier_entry', 'class_button',
                        'class_label', 'music_button', 'music_label',
-                       'sprite_button', 'sprite_label', 'double_battle_switch',
+                       'sprite_button', 'sprite_image', 'double_battle_switch',
                        'check_bad_move_switch', 'check_viability_switch', 'setup_first_turn_switch',
                        'item_button1', 'item_label1', 'item_button2',
                        'item_label2', 'item_button3', 'item_label3',
@@ -557,11 +571,18 @@ class Editor:
         self.trainer_popover.add(self.trainer_searchable)
         self.choose_trainer_button.set_popover(self.trainer_popover)
         self.trainer_popover.set_relative_to(self.choose_trainer_button)
-
         for trainer in self.trainers:
             if trainer == 'TRAINER_NONE':
                 continue
-            self.trainer_searchable.add_item(trainer)
+            self.trainer_searchable.add_label(trainer)
+
+        self.sprite_popover = Gtk.Popover()
+        self.sprite_searchable = SearchableList(200, 450)
+        self.sprite_searchable.add_sprites(self.sprites)
+        self.sprite_searchable.list_box.connect('row-activated', self.on_sprite_row_activated)
+        self.sprite_popover.add(self.sprite_searchable)
+        self.sprite_button.set_popover(self.sprite_popover)
+        self.sprite_popover.set_relative_to(self.sprite_button)
 
         self.new_trainer_dialog = NewTrainerDialog()
         self.new_trainer_dialog.set_transient_for(self.window)
@@ -586,7 +607,12 @@ class Editor:
         builder.connect_signals(self)
         key = list(self.trainers.keys())[1]
         self.set_current_trainer(self.trainers[key])
+        self.update_sprite()
 
+    def update_sprite(self):
+        original_pixbuf = self.sprites[self.current_trainer.trainer_pic]
+        pixbuf = original_pixbuf.scale_simple(160, 160, GdkPixbuf.InterpType.NEAREST)
+        self.sprite_image.set_from_pixbuf(pixbuf)
 
     def on_quit(self, data):
         Gtk.main_quit()
@@ -596,8 +622,10 @@ class Editor:
         write_opponents_header(self.trainers)
         write_trainers_header(self.trainers)
 
-    def on_new_trainer_clicked(self, data):
-        pass
+    def on_sprite_row_activated(self, box, row):
+        sprite = row.get_children()[0].sprite_label
+        self.current_trainer.trainer_pic = row.get_children()[0].sprite_label
+        self.update_sprite()
 
     def on_mon_button_toggled(self, button):
         if button.get_active():
@@ -629,14 +657,17 @@ class Editor:
     def on_risky_switch_activate(self, switch, data):
         self.current_trainer.risky = switch.get_active()
 
+    def set_class_label(self, text):
+        self.class_label.set_text(text.replace('TRAINER_CLASS_', '').replace('_', ' ').title())
+
     def set_current_trainer(self, trainer):
         self.current_trainer = trainer
         party = self.current_trainer.party
+        self.update_sprite()
         self.trainer_name_entry.set_text(self.current_trainer.name)
         self.identifier_entry.set_text(self.current_trainer.identifier)
-        self.class_label.set_text(self.current_trainer.trainer_class)
+        self.set_class_label(self.current_trainer.trainer_class)
         #self.music_label.set_text(trainer.encounter_music_gender)
-        self.sprite_label.set_text(self.current_trainer.trainer_pic)
         self.double_battle_switch.set_active(self.current_trainer.double_battle)
 
         self.check_bad_move_switch.set_active(self.current_trainer.check_bad_move)
@@ -658,6 +689,15 @@ class Editor:
             else:
                 getattr(self, 'mon_label{}'.format(count)).set_text(party.mons[count-1].species)
 
+    def load_sprite_list(self):
+        self.sprites = {}
+        image_files = glob.glob('graphics/trainers/front_pics/*.png')
+        for entry in image_files:
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file(entry)
+            self.sprites['TRAINER_PIC_{}'
+                         .format(os.path.basename(entry))
+                         .replace('_front_pic.png', '')
+                         .upper()] = pixbuf
 
     def on_trainer_row_activated(self, box, row):
         self.set_current_trainer(self.trainers[row.get_children()[0].get_text()])
