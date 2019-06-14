@@ -600,6 +600,7 @@
                       <object class="GtkEntry" id="identifier_entry">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <signal name="changed" handler="on_identifier_entry_changed" swapped="no"/>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>

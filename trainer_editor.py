@@ -727,6 +727,9 @@ class Editor:
     def on_trainer_name_entry_changed(self, entry):
         self.current_trainer.name = entry.get_text()
 
+    def on_identifier_entry_changed(self, entry):
+        self.current_trainer.identifier = entry.get_text()
+
     def on_item_list_box_row_activated(self, box, row):
         item_text = row.get_children()[0].get_text()
         for count, button in enumerate(self.item_buttons, start=1):
