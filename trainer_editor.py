@@ -13,7 +13,7 @@ class Party:
 
     def add_mon(self, mon):
         if self._add_mon_index == 6:
-            print('Programmer error. {} added too many mons'.format(self.identifier), file=sys.stderr)
+            print(f'Programmer error. {self.identifier} added too many mons', file=sys.stderr)
             sys.exit(1)
         self.mons[self._add_mon_index] = mon
         self._add_mon_index += 1
@@ -22,11 +22,7 @@ class Party:
         mons[position] = mon
 
     def get_mons_compact(self):
-        mons = []
-        for mon in self.mons:
-            if mon is not None:
-                mons.append(mon)
-        return mons
+        return [ mon for mon in self.mons if mon is not None ]
 
     def mons_have_items(self):
         if not hasattr(self, 'mons'):
@@ -81,17 +77,13 @@ class Trainer:
 
     def add_item(self, item):
         if self._add_item_index == 5:
-            print('Programmer error. {} added too many items'.format(self.identifier), file=sys.stderr)
+            print(f'Programmer error. {self.identifier} added too many items', file=sys.stderr)
             sys.exit(1)
         self.items[self._add_item_index] = item
         self._add_item_index += 1
 
     def get_items_compact(self):
-        items = []
-        for item in self.items:
-            if item is not None:
-                items.append(item)
-        return items
+        return [ item for item in self.items if item is not None ]
 
     def get_ai_flags(self):
         flags = ''
@@ -159,9 +151,7 @@ def parse_party(lines):
             mon = Mon()
         elif tokens[0][0] == '.':
             if tokens[0] == '.moves':
-                moves = []
-                for move in tokens[2:]:
-                    moves.append(move.rstrip(','))
+                moves = [move.rstrip(',') for move in tokens[2:] ]
                 setattr(mon, 'moves', moves)
             else:
                 setattr(mon, tokens[0].lstrip('.'), tokens[-1].rstrip(','))
@@ -245,10 +235,10 @@ def write_opponents_header(trainers):
         print('#ifndef GUARD_CONSTANTS_OPPONENTS_H', file=f)
         print('#define GUARD_CONSTANTS_OPPONENTS_H\n', file=f)
         for count, trainer in enumerate(trainers.values()):
-            trainer_string = "#define {}".format(trainer.identifier)
-            print("{} {:>{}}".format(trainer_string, count, 34-len(trainer_string)), file=f)
-        print("\n#define TRAINERS_COUNT {0:>12}\n".format(len(trainers)), file=f)
-        print("#endif  // GUARD_CONSTANTS_OPPONENTS_H", file=f)
+            trainer_string = f'#define {trainer.identifier}'
+            print(f'{trainer_string} {count:>{34-len(trainer_string)}}', file=f)
+        print(f'\n#define TRAINERS_COUNT {len(trainers):>12}\n', file=f)
+        print('#endif  // GUARD_CONSTANTS_OPPONENTS_H', file=f)
 
 def array_text_generator(items):
     string = ''
@@ -267,24 +257,24 @@ def write_trainers_header(trainers):
             if trainer.is_female:
                 gender_flags += 'F_TRAINER_FEMALE | '
             gender_flags += trainer.music
-            print('    [{}] ='.format(trainer.identifier), file=f)
+            print(f'    [{trainer.identifier}] =', file=f)
             print('    {', file=f)
-            print('        .partyFlags = {},'.format(trainer.get_party_flags()), file=f)
-            print('        .trainerClass = {},'.format(trainer.trainer_class), file=f)
-            print('        .encounterMusic_gender = {},'.format(gender_flags), file=f)
-            print('        .trainerPic = {},'.format(trainer.trainer_pic), file=f)
-            print('        .trainerName = _("{}"),'.format(trainer.name), file=f)
+            print(f'        .partyFlags = {trainer.get_party_flags()},', file=f)
+            print(f'        .trainerClass = {trainer.trainer_class},', file=f)
+            print(f'        .encounterMusic_gender = {gender_flags},', file=f)
+            print(f'        .trainerPic = {trainer.trainer_pic},', file=f)
+            print(f'        .trainerName = _("{trainer.name}"),', file=f)
             if not hasattr(trainer, 'items'):
                 print('        .items = {{}},', file=f)
             else:
-                print('        .items = {{{}}},'.format(array_text_generator(trainer.get_items_compact())), file=f)
-            print('        .doubleBattle = {},'.format("TRUE" if trainer.double_battle else "FALSE"), file=f)
-            print('        .aiFlags = {},'.format(trainer.get_ai_flags()), file=f)
-            print('        .partySize = {},'.format('0' if trainer.identifier == 'TRAINER_NONE' else 'ARRAY_COUNT({})'.format(trainer.party.identifier)), file=f)
+                print(f'        .items = {{{array_text_generator(trainer.get_items_compact())}}},', file=f)
+            print(f'        .doubleBattle = {"TRUE" if trainer.double_battle else "FALSE"},', file=f)
+            print(f'        .aiFlags = {trainer.get_ai_flags()},', file=f)
+            print(f'        .partySize = {"0" if trainer.identifier == "TRAINER_NONE" else f"ARRAY_COUNT({trainer.party.identifier})"},', file=f)
             if trainer.identifier == 'TRAINER_NONE':
                 print('        .party = {.NoItemDefaultMoves = NULL},', file=f)
             else:
-                print('        .party = {{.{} = {}}},'.format(trainer.party.party_type, trainer.party.identifier), file=f)
+                print(f'        .party = {{.{trainer.party.party_type} = {trainer.party.identifier}}},', file=f)
             print('    },', file=f)
             if count != len(trainers):
                 print(file=f)
@@ -293,16 +283,16 @@ def write_trainers_header(trainers):
 def write_parties_header(parties):
     with open('src/data/trainer_parties.h', 'w') as f:
         for count, party in enumerate(parties.values(), start=1):
-            print('static const struct {} {}[] = {{'.format('TrainerMon{}'.format(party.party_type), party.identifier), file=f)
+            print(f'static const struct TrainerMon{party.party_type} {party.identifier}[] = {{', file=f)
             for mon_count, mon in enumerate(party.get_mons_compact(), start=1):
                 print('    {', file=f)
-                print('    .iv = {},'.format(mon.iv), file=f)
-                print('    .lvl = {},'.format(mon.lvl), file=f)
-                print('    .species = {},'.format(mon.species), file=f)
+                print(f'    .iv = {mon.iv},', file=f)
+                print(f'    .lvl = {mon.lvl},', file=f)
+                print(f'    .species = {mon.species},', file=f)
                 if mon.has_item():
-                    print('    .heldItem = {}{}'.format(mon.heldItem, ',' if mon.has_moves() else ''), file=f)
+                    print(f'    .heldItem = {mon.heldItem}{"," if mon.has_moves() else ""}', file=f)
                 if mon.has_moves():
-                    print('    .moves = {}'.format(array_text_generator(mon.moves)), file=f)
+                    print(f'    .moves = {array_text_generator(mon.moves)}', file=f)
                 if mon_count == len(party.get_mons_compact()):
                     print('    }', file=f)
                 else:
@@ -369,10 +359,8 @@ class PokemonPanel(Gtk.Popover):
     def __init__(self):
         super().__init__()
         self.active_button = None
-        self.move_buttons = []
         self.mon = None
-        for i in range(1,5):
-            self.move_buttons.append(getattr(self, 'move_button{}'.format(i)))
+        self.move_buttons = [getattr(self, f'move_button{i}') for i in range(1,5)]
         self.iv_spin_box.set_range(0, 255)
         self.level_spin_box.set_range(1,100)
 
@@ -626,13 +614,10 @@ class Editor:
 
         self.mon_buttons = []
         for i in range(1,7):
-            button = getattr(self, 'mon_button{}'.format(i))
+            button = getattr(self, f'mon_button{i}')
             button.set_popover(self.pokemon_panel)
             self.mon_buttons.append(button)
-        self.item_buttons = []
-        for i in range(1,5):
-            button = getattr(self, 'item_button{}'.format(i))
-            self.item_buttons.append(button)
+        self.item_buttons = [getattr(self, f'item_button{i}') for i in range(1,5)]
 
         builder.connect_signals(self)
         key = list(self.trainers.keys())[1]
@@ -659,14 +644,14 @@ class Editor:
 
     def on_music_row_activated(self, box, row):
         label = row.get_children()[0].get_text()
-        music = 'TRAINER_ENCOUNTER_MUSIC_{}'.format(label.replace(' ', '_').upper())
+        music = f'TRAINER_ENCOUNTER_MUSIC_{label.replace(" ", "_").upper()}'
         self.current_trainer.music = music
         self.music_label.set_text(label)
         self.music_popover.popdown()
 
     def on_trainer_class_row_activated(self, box, row):
         label = row.get_children()[0].get_text()
-        trainer_class = 'TRAINER_CLASS_{}'.format(label.replace(' ', '_').upper())
+        trainer_class = f'TRAINER_CLASS_{label.replace(" ", "_").upper()}'
         self.current_trainer.trainer_class = trainer_class
         self.trainer_class_label.set_text(label)
 
@@ -738,24 +723,23 @@ class Editor:
         items = self.current_trainer.get_items_compact()
         if len(items) > 0:
             for count, item in enumerate(items, start=1):
-                getattr(self, 'item_label{}'.format(count)).set_text('Select Item' if item == "ITEM_NONE" else item)
+                getattr(self, f'item_label{count}').set_text('Select Item' if item == "ITEM_NONE" else item)
         else:
             for i in range(1,5):
-                getattr(self, 'item_label{}'.format(i)).set_text('Select Item')
+                getattr(self, f'item_label{i}').set_text('Select Item')
 
         for count, mon in enumerate(party.mons, start=1):
             if mon is None:
-                getattr(self, 'mon_label{}'.format(count)).set_text('Select Pokemon')
+                getattr(self, f'mon_label{count}').set_text('Select Pokemon')
             else:
-                getattr(self, 'mon_label{}'.format(count)).set_text(party.mons[count-1].species)
+                getattr(self, f'mon_label{count}').set_text(party.mons[count-1].species)
 
     def load_sprite_list(self):
         self.sprites = {}
         image_files = glob.glob('graphics/trainers/front_pics/*.png')
         for entry in image_files:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(entry)
-            self.sprites['TRAINER_PIC_{}'
-                         .format(os.path.basename(entry))
+            self.sprites[f'TRAINER_PIC_{os.path.basename(entry)}'
                          .replace('cool_trainer', 'COOLTRAINER')
                          .replace('_front_pic.png', '')
                          .upper()] = pixbuf
@@ -774,7 +758,7 @@ class Editor:
         item_text = row.get_children()[0].get_text()
         for count, button in enumerate(self.item_buttons, start=1):
             if button.get_active():
-                getattr(self, 'item_label{}'.format(count)).set_text(item_text)
+                getattr(self, f'item_label{count}').set_text(item_text)
                 self.current_trainer.items[count-1] = self.items[item_text]
         self.item_popover.popdown()
 
