@@ -634,12 +634,12 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkMenuButton" id="class_button">
+                      <object class="GtkMenuButton" id="trainer_class_button">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <child>
-                          <object class="GtkLabel" id="class_label">
+                          <object class="GtkLabel" id="trainer_class_label">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">Select Class</property>

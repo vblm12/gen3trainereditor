@@ -539,8 +539,8 @@ class Editor:
         builder = Gtk.Builder()
         builder.add_from_file('editor.ui')
         for widget in ['window', 'save_button', 'choose_trainer_button',
-                       'choose_trainer_label', 'identifier_entry', 'class_button',
-                       'class_label', 'music_button', 'music_label',
+                       'choose_trainer_label', 'identifier_entry', 'trainer_class_button',
+                       'trainer_class_label', 'music_button', 'music_label',
                        'sprite_button', 'sprite_image', 'double_battle_switch',
                        'check_bad_move_switch', 'check_viability_switch', 'setup_first_turn_switch',
                        'item_button1', 'item_label1', 'item_button2',
@@ -578,6 +578,8 @@ class Editor:
 
         self.music_popover = Gtk.Popover()
         self.music_searchable = SearchableList(300,400)
+        self.trainer_class_popover = Gtk.Popover()
+        self.trainer_class_searchable = SearchableList(300, 450)
         with open('include/constants/trainers.h') as f:
             for line in f:
                 if '#define TRAINER_ENCOUNTER_MUSIC' in line:
@@ -585,10 +587,19 @@ class Editor:
                                                     .replace('TRAINER_ENCOUNTER_MUSIC_', '')
                                                     .replace("_", ' ')
                                                     .title())
+                elif '#define TRAINER_CLASS' in line:
+                    self.trainer_class_searchable.add_label(line.split()[1]
+                                                            .replace('TRAINER_CLASS_', '')
+                                                            .replace("_", ' ')
+                                                            .title())
         self.music_searchable.list_box.connect('row-activated', self.on_music_row_activated)
         self.music_popover.add(self.music_searchable)
         self.music_button.set_popover(self.music_popover)
         self.music_popover.set_relative_to(self.music_button)
+        self.trainer_class_searchable.list_box.connect('row-activated', self.on_trainer_class_row_activated)
+        self.trainer_class_popover.add(self.trainer_class_searchable)
+        self.trainer_class_button.set_popover(self.trainer_class_popover)
+        self.trainer_class_popover.set_relative_to(self.trainer_class_button)
 
         self.new_trainer_dialog = NewTrainerDialog()
         self.new_trainer_dialog.set_transient_for(self.window)
@@ -634,11 +645,17 @@ class Editor:
         self.update_sprite()
 
     def on_music_row_activated(self, box, row):
-        result = row.get_children()[0].get_text()
-        label = 'TRAINER_ENCOUNTER_MUSIC_{}'.format(result.replace(' ', '_').upper())
-        self.current_trainer.music = label
-        self.music_label.set_text(result)
+        label = row.get_children()[0].get_text()
+        music = 'TRAINER_ENCOUNTER_MUSIC_{}'.format(result.replace(' ', '_').upper())
+        self.current_trainer.music = music
+        self.music_label.set_text(label)
         self.music_popover.popdown()
+
+    def on_trainer_class_row_activated(self, box, row):
+        label = row.get_children()[0].get_text()
+        trainer_class = 'TRAINER_CLASS_{}'.format(label.replace(' ', '_').upper())
+        self.current_trainer.trainer_class = trainer_class
+        self.trainer_class_label.set_text(label)
 
     def on_mon_button_toggled(self, button):
         if button.get_active():
@@ -673,8 +690,8 @@ class Editor:
     def on_risky_switch_activate(self, switch, data):
         self.current_trainer.risky = switch.get_active()
 
-    def set_class_label(self, text):
-        self.class_label.set_text(text.replace('TRAINER_CLASS_', '').replace('_', ' ').title())
+    def set_trainer_class_label(self, text):
+        self.trainer_class_label.set_text(text.replace('TRAINER_CLASS_', '').replace('_', ' ').title())
 
     def set_current_trainer(self, trainer):
         self.current_trainer = trainer
@@ -682,7 +699,7 @@ class Editor:
         self.update_sprite()
         self.trainer_name_entry.set_text(self.current_trainer.name)
         self.identifier_entry.set_text(self.current_trainer.identifier)
-        self.set_class_label(self.current_trainer.trainer_class)
+        self.set_trainer_class_label(self.current_trainer.trainer_class)
         self.music_label.set_text(trainer.music.replace('TRAINER_ENCOUNTER_MUSIC_', '').title())
         if self.current_trainer.is_female:
             self.female_radio_button.set_active(True)
