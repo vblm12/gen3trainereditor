@@ -66,7 +66,7 @@ class Trainer:
         self.items = [None, None, None, None]
         self._add_item_index = 0
         self.trainer_class = 'TRAINER_CLASS_YOUNGSTER'
-        self.encounter_music_gender = ['TRAINER_PIC_YOUNGSTER']
+        self.music = 'TRAINER_ENCOUNTER_MUSIC_MALE'
         self.trainer_pic = 'TRAINER_PIC_YOUNGSTER'
         self.double_battle = False
         self.check_bad_move = True
@@ -74,6 +74,7 @@ class Trainer:
         self.try_to_faint = True
         self.setup_first_turn = False
         self.risky = False
+        self.is_female = False
 
     def add_item(self, item):
         if self._add_item_index == 5:
@@ -190,12 +191,9 @@ def get_trainers(parties):
             elif tokens[0] == '.trainerClass':
                 trainer.trainer_class = tokens[-1].rstrip(',')
             elif tokens[0] == '.encounterMusic_gender':
-                emg = []
-                for token in tokens[2:]:
-                    if token == '|':
-                        continue
-                    emg.append(token.rstrip(','))
-                trainer.encounter_music_gender = emg
+                if tokens[2] == 'F_TRAINER_FEMALE':
+                    trainer.is_female = True
+                trainer.music = (tokens[-1].rstrip(','))
             elif tokens[0] == '.trainerPic':
                 trainer.trainer_pic = tokens[-1].rstrip(',')
             elif tokens[0] == '.trainerName':
@@ -264,11 +262,15 @@ def write_trainers_header(trainers):
     with open('src/data/trainers.h', 'w') as f:
         print('const struct Trainer gTrainers[] = {', file=f)
         for count, trainer in enumerate(trainers.values(), start=1):
+            gender_flags = ''
+            if trainer.is_female:
+                gender_flags += 'F_TRAINER_FEMALE | '
+            gender_flags += trainer.music
             print('    [{}] ='.format(trainer.identifier), file=f)
             print('    {', file=f)
             print('        .partyFlags = {},'.format(trainer.get_party_flags()), file=f)
             print('        .trainerClass = {},'.format(trainer.trainer_class), file=f)
-            print('        .encounterMusic_gender = {},'.format(flags_to_string(trainer.encounter_music_gender)), file=f)
+            print('        .encounterMusic_gender = {},'.format(gender_flags), file=f)
             print('        .trainerPic = {},'.format(trainer.trainer_pic), file=f)
             print('        .trainerName = _("{}"),'.format(trainer.name), file=f)
             if not hasattr(trainer, 'items'):
@@ -560,7 +562,8 @@ class Editor:
                        'mon_label4', 'mon_button5', 'mon_label5',
                        'mon_button6', 'mon_label6', 'trainer_list_box',
                        'try_to_faint_switch', 'trainer_name_entry',
-                       'risky_switch', 'item_popover', 'item_list_box']:
+                       'risky_switch', 'item_popover', 'item_list_box',
+                       'male_radio_button', 'female_radio_button']:
             setattr(self, widget, builder.get_object(widget))
 
         self.trainer_popover = Gtk.Popover()
@@ -583,6 +586,20 @@ class Editor:
         self.sprite_popover.add(self.sprite_searchable)
         self.sprite_button.set_popover(self.sprite_popover)
         self.sprite_popover.set_relative_to(self.sprite_button)
+
+        self.music_popover = Gtk.Popover()
+        self.music_searchable = SearchableList(300,400)
+        with open('include/constants/trainers.h') as f:
+            for line in f:
+                if '#define TRAINER_ENCOUNTER_MUSIC' in line:
+                    self.music_searchable.add_label(line.split()[1]
+                                                    .replace('TRAINER_ENCOUNTER_MUSIC_', '')
+                                                    .replace("_", ' ')
+                                                    .title())
+        self.music_searchable.list_box.connect('row-activated', self.on_music_row_activated)
+        self.music_popover.add(self.music_searchable)
+        self.music_button.set_popover(self.music_popover)
+        self.music_popover.set_relative_to(self.music_button)
 
         self.new_trainer_dialog = NewTrainerDialog()
         self.new_trainer_dialog.set_transient_for(self.window)
@@ -627,6 +644,13 @@ class Editor:
         self.current_trainer.trainer_pic = row.get_children()[0].sprite_label
         self.update_sprite()
 
+    def on_music_row_activated(self, box, row):
+        result = row.get_children()[0].get_text()
+        label = 'TRAINER_ENCOUNTER_MUSIC_{}'.format(result.replace(' ', '_').upper())
+        self.current_trainer.music = label
+        self.music_label.set_text(result)
+        self.music_popover.popdown()
+
     def on_mon_button_toggled(self, button):
         if button.get_active():
             for i, b in enumerate(self.mon_buttons):
@@ -643,6 +667,9 @@ class Editor:
     def on_item_button_toggled(self, button):
         if button.get_active():
             self.item_popover.set_relative_to(button)
+
+    def on_gender_toggled(self, button):
+        self.current_trainer.is_female = self.female_radio_button.get_active()
 
     def on_double_battle_switch_activate(self, switch, data):
         self.current_trainer.double_battle = switch.get_active()
@@ -667,7 +694,11 @@ class Editor:
         self.trainer_name_entry.set_text(self.current_trainer.name)
         self.identifier_entry.set_text(self.current_trainer.identifier)
         self.set_class_label(self.current_trainer.trainer_class)
-        #self.music_label.set_text(trainer.encounter_music_gender)
+        self.music_label.set_text(trainer.music.replace('TRAINER_ENCOUNTER_MUSIC_', '').title())
+        if self.current_trainer.is_female:
+            self.female_radio_button.set_active(True)
+        else:
+            self.male_radio_button.set_active(True)
         self.double_battle_switch.set_active(self.current_trainer.double_battle)
 
         self.check_bad_move_switch.set_active(self.current_trainer.check_bad_move)

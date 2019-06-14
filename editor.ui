@@ -768,6 +768,7 @@
                             <property name="receives_default">False</property>
                             <property name="active">True</property>
                             <property name="draw_indicator">True</property>
+                            <signal name="toggled" handler="on_gender_toggled" swapped="no"/>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -783,6 +784,7 @@
                             <property name="active">True</property>
                             <property name="draw_indicator">True</property>
                             <property name="group">male_radio_button</property>
+                            <signal name="toggled" handler="on_gender_toggled" swapped="no"/>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
