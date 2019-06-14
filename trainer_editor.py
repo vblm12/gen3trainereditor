@@ -74,6 +74,9 @@ class Trainer:
         self.try_to_faint = True
         self.setup_first_turn = False
         self.risky = False
+        self.prefer_strongest_move = False
+        self.prefer_baton_pass = False
+        self.hp_aware = False
         self.is_female = False
 
     def add_item(self, item):
@@ -99,9 +102,15 @@ class Trainer:
         if self.check_viability:
             flags += 'AI_SCRIPT_CHECK_VIABILITY | '
         if self.setup_first_turn:
-            flags += 'AI_SCRIPT_SETUP_FIRST_TURN'
+            flags += 'AI_SCRIPT_SETUP_FIRST_TURN | '
         if self.risky:
-            flags += 'AI_SCRIPT_RISKY'
+            flags += 'AI_SCRIPT_RISKY | '
+        if self.prefer_strongest_move:
+            flags += 'AI_SCRIPT_PREFER_STRONGEST_MOVE | '
+        if self.prefer_baton_pass:
+            flags += 'AI_SCRIPT_PREFER_BATON_PASS | '
+        if self.hp_aware:
+            flags += 'AI_SCRIPT_HP_AWARE | '
         if flags == '':
             flags += '0'
         return flags.rstrip(' |')
@@ -220,6 +229,9 @@ def get_trainers(parties):
                 trainer.check_viability = True if 'AI_SCRIPT_CHECK_VIABILITY' in ai_flags else False
                 trainer.setup_first_turn = True if 'AI_SCRIPT_SETUP_FIRST_TURN' in ai_flags else False
                 trainer.risky = True if 'AI_SCRIPT_RISKY' in ai_flags else False
+                trainer.prefer_strongest_move = True if 'AI_SCRIPT_PREFER_STRONGEST_MOVE' in ai_flags else False
+                trainer.prefer_baton_pass = True if 'AI_SCRIPT_PREFER_BATON_PASS' in ai_flags else False
+                trainer.hp_aware = True if 'AI_SCRIPT_HP_AWARE' in ai_flags else False
             elif tokens[0] == '.party':
                 party_id = tokens[-1].rstrip('},')
                 if party_id != "NULL":
@@ -552,7 +564,8 @@ class Editor:
                        'mon_button6', 'mon_label6', 'trainer_list_box',
                        'try_to_faint_switch', 'trainer_name_entry',
                        'risky_switch', 'item_popover', 'item_list_box',
-                       'male_radio_button', 'female_radio_button']:
+                       'male_radio_button', 'female_radio_button', 'prefer_strongest_move_switch',
+                       'prefer_baton_pass_switch', 'hp_aware_switch']:
             setattr(self, widget, builder.get_object(widget))
 
         self.trainer_popover = Gtk.Popover()
@@ -689,6 +702,12 @@ class Editor:
         self.current_trainer.setup_first_turn = switch.get_active()
     def on_risky_switch_activate(self, switch, data):
         self.current_trainer.risky = switch.get_active()
+    def on_prefer_strongest_move_switch_activate(self, switch, data):
+        self.current_trainer.prefer_strongest_move = switch.get_active()
+    def on_prefer_baton_pass_switch_activate(self, switch, data):
+        self.current_trainer.prefer_baton_pass = switch.get_active()
+    def on_hp_aware_switch_activate(self, switch, data):
+        self.current_trainer.hp_aware = switch.get_active()
 
     def set_trainer_class_label(self, text):
         self.trainer_class_label.set_text(text.replace('TRAINER_CLASS_', '').replace('_', ' ').title())
@@ -711,6 +730,10 @@ class Editor:
         self.try_to_faint_switch.set_active(self.current_trainer.try_to_faint)
         self.check_viability_switch.set_active(self.current_trainer.check_viability)
         self.setup_first_turn_switch.set_active(self.current_trainer.setup_first_turn)
+        self.risky_switch.set_active(self.current_trainer.risky)
+        self.prefer_strongest_move_switch.set_active(self.current_trainer.prefer_strongest_move)
+        self.prefer_baton_pass_switch.set_active(self.current_trainer.prefer_baton_pass)
+        self.hp_aware_switch.set_active(self.current_trainer.hp_aware)
 
         items = self.current_trainer.get_items_compact()
         if len(items) > 0:
