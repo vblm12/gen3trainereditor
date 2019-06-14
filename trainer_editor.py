@@ -696,6 +696,7 @@ class Editor:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(entry)
             self.sprites['TRAINER_PIC_{}'
                          .format(os.path.basename(entry))
+                         .replace('cool_trainer', 'COOLTRAINER')
                          .replace('_front_pic.png', '')
                          .upper()] = pixbuf
 
