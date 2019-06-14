@@ -228,17 +228,6 @@ def get_trainers(parties):
                     trainer.party = None
     return trainers
 
-def flags_to_string(flags):
-    if len(flags) == 1:
-        return '{}'.format(flags[0])
-    flags_str = ""
-    for count, flag in enumerate(flags, start=1):
-        if count == len(flags):
-            flags_str += flag
-        else:
-            flags_str += "{} | ".format(flag)
-    return flags_str
-
 def write_opponents_header(trainers):
     with open('include/constants/opponents.h', 'w') as f:
         print('#ifndef GUARD_CONSTANTS_OPPONENTS_H', file=f)
