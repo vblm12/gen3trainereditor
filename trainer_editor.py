@@ -659,7 +659,7 @@ class Editor:
 
     def on_music_row_activated(self, box, row):
         label = row.get_children()[0].get_text()
-        music = 'TRAINER_ENCOUNTER_MUSIC_{}'.format(result.replace(' ', '_').upper())
+        music = 'TRAINER_ENCOUNTER_MUSIC_{}'.format(label.replace(' ', '_').upper())
         self.current_trainer.music = music
         self.music_label.set_text(label)
         self.music_popover.popdown()
