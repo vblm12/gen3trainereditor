@@ -439,6 +439,7 @@ class PokemonPanel(Gtk.Popover):
                 self.set_mon(Mon(species))
             else:
                 self.mon.species = species
+                self.species_button.set_label(species)
         self.remove(self.pokemon_searchable)
         self.add(self.pokemon_grid)
 
