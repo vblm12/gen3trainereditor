@@ -472,8 +472,10 @@ class PokemonPanel(Gtk.Popover):
             self.iv_spin_box.set_value(int(mon.iv))
             self.level_spin_box.set_value(int(mon.lvl))
             self.species_button.set_label(mon.species)
-            if mon.has_item():
+            if mon.has_item() and mon.heldItem is not 'ITEM_NONE':
                 self.held_item_button.set_label(mon.heldItem)
+            else:
+                self.held_item_button.set_label('Select Item')
             for i in range(0, 4):
                 button = self.move_buttons[i]
                 if not mon.has_moves():
