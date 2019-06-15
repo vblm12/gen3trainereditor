@@ -432,11 +432,13 @@ class PokemonPanel(Gtk.Popover):
 
     def on_mon_selected(self, box, row):
         species = row.get_children()[0].get_text()
-        if self.mon is None:
-            self.set_mon(Mon(species))
+        if species == 'SPECIES_NONE':
+            self.set_mon(None)
         else:
-            self.mon.species = species
-        self.species_button.set_label(species)
+            if self.mon is None:
+                self.set_mon(Mon(species))
+            else:
+                self.mon.species = species
         self.remove(self.pokemon_searchable)
         self.add(self.pokemon_grid)
 
@@ -663,7 +665,10 @@ class Editor:
             for i, b in enumerate(self.mon_buttons):
                 if b is button:
                     self.current_trainer.party.mons[i] = self.pokemon_panel.mon
-                    button.get_child().set_text(self.pokemon_panel.mon.species)
+                    if self.pokemon_panel.mon is not None:
+                        button.get_child().set_text(self.pokemon_panel.mon.species)
+                    else:
+                        button.get_child().set_text('Select Pokemon')
                     self.current_trainer.party.revalidate_party()
 
     def on_item_button_toggled(self, button):
