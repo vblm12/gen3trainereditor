@@ -370,8 +370,6 @@ class PokemonPanel(Gtk.Popover):
                 if '#define SPECIES' in line:
                     tokens = line.split()
                     self.pokemon_searchable.add_label(tokens[1])
-                    if tokens[1] == 'SPECIES_UNOWN_QMARK':
-                        break
         self.pokemon_searchable.list_box.connect('row-activated', self.on_mon_selected)
 
         self.held_item_searchable = SearchableList()
