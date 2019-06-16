@@ -8,7 +8,7 @@ import sys
 
 class Party:
     def __init__(self):
-        self.mons = [None, None, None, None, None, None]
+        self.mons = [None] * 6
         self._add_mon_index = 0
 
     def add_mon(self, mon):
@@ -19,7 +19,7 @@ class Party:
         self._add_mon_index += 1
 
     def set_mon(self, mon, position):
-        mons[position] = mon
+        self.mons[position] = mon
 
     def get_mons_compact(self):
         return [ mon for mon in self.mons if mon is not None ]
@@ -51,7 +51,7 @@ class Party:
                 continue
             if has_moves:
                 if not hasattr(mon, 'moves'):
-                    mon.moves = ['MOVE_NONE', 'MOVE_NONE', 'MOVE_NONE', 'MOVE_NONE']
+                    mon.moves = ['MOVE_NONE'] * 4
             if has_items:
                 if not hasattr(mon, 'heldItem'):
                     mon.heldItem = 'ITEM_NONE'
@@ -59,7 +59,7 @@ class Party:
 class Trainer:
 
     def __init__(self):
-        self.items = [None, None, None, None]
+        self.items = [None] * 4
         self._add_item_index = 0
         self.trainer_class = 'TRAINER_CLASS_YOUNGSTER'
         self.music = 'TRAINER_ENCOUNTER_MUSIC_MALE'
@@ -133,7 +133,7 @@ class Mon:
 
     def set_move(self, move, position):
         if not self.has_moves():
-            self.moves = ['MOVE_NONE', 'MOVE_NONE', 'MOVE_NONE', 'MOVE_NONE']
+            self.moves = ['MOVE_NONE'] * 4
         self.moves[position] = move
 
     def add_item(self, item):
@@ -180,7 +180,7 @@ def get_trainers(parties):
             if line == '};\n':
                 break
             tokens = line.split()
-            if line == '\n' or tokens[0] == 'const' or tokens[0] == '{':
+            if line == '\n' or tokens[0] in ('const', '{'):
                 continue
             elif tokens[0] == '},':
                 trainers[trainer.identifier] = trainer
