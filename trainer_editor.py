@@ -529,6 +529,7 @@ class NewTrainerDialog(Gtk.Dialog):
 
 class Editor:
     items = {
+        'None': 'ITEM_NONE',
         'Potion': 'ITEM_POTION',
         'Super Potion': 'ITEM_SUPER_POTION',
         'Hyper Potion': 'ITEM_HYPER_POTION',
@@ -764,7 +765,11 @@ class Editor:
         item_text = row.get_children()[0].get_text()
         for count, button in enumerate(self.item_buttons, start=1):
             if button.get_active():
-                getattr(self, f'item_label{count}').set_text(item_text)
+                label = getattr(self, f'item_label{count}')
+                if item_text == 'None':
+                    label.set_text('Select Item')
+                else:
+                    label.set_text(item_text)
                 self.current_trainer.items[count-1] = self.items[item_text]
         self.item_popover.popdown()
 
