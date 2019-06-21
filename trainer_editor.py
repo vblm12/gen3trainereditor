@@ -18,9 +18,6 @@ class Party:
         self.mons[self._add_mon_index] = mon
         self._add_mon_index += 1
 
-    def set_mon(self, mon, position):
-        self.mons[position] = mon
-
     def get_mons_compact(self):
         return [ mon for mon in self.mons if mon is not None ]
 
@@ -214,13 +211,13 @@ def get_trainers(parties):
                     if token == '|':
                         continue
                     ai_flags.append(token.rstrip(','))
-                trainer.check_bad_move = True if 'AI_SCRIPT_CHECK_BAD_MOVE' in ai_flags else False
-                trainer.try_to_faint = True if 'AI_SCRIPT_TRY_TO_FAINT' in ai_flags else False
-                trainer.check_viability = True if 'AI_SCRIPT_CHECK_VIABILITY' in ai_flags else False
-                trainer.setup_first_turn = True if 'AI_SCRIPT_SETUP_FIRST_TURN' in ai_flags else False
-                trainer.risky = True if 'AI_SCRIPT_RISKY' in ai_flags else False
-                trainer.prefer_strongest_move = True if 'AI_SCRIPT_PREFER_STRONGEST_MOVE' in ai_flags else False
-                trainer.prefer_baton_pass = True if 'AI_SCRIPT_PREFER_BATON_PASS' in ai_flags else False
+                trainer.check_bad_move = 'AI_SCRIPT_CHECK_BAD_MOVE' in ai_flags 
+                trainer.try_to_faint = 'AI_SCRIPT_TRY_TO_FAINT' in ai_flags 
+                trainer.check_viability = 'AI_SCRIPT_CHECK_VIABILITY' in ai_flags 
+                trainer.setup_first_turn = 'AI_SCRIPT_SETUP_FIRST_TURN' in ai_flags
+                trainer.risky = 'AI_SCRIPT_RISKY' in ai_flags 
+                trainer.prefer_strongest_move = 'AI_SCRIPT_PREFER_STRONGEST_MOVE' in ai_flags
+                trainer.prefer_baton_pass = 'AI_SCRIPT_PREFER_BATON_PASS' in ai_flags
                 trainer.hp_aware = True if 'AI_SCRIPT_HP_AWARE' in ai_flags else False
             elif tokens[0] == '.party':
                 party_id = tokens[-1].rstrip('},')
