@@ -218,7 +218,7 @@ def get_trainers(parties):
                 trainer.risky = 'AI_SCRIPT_RISKY' in ai_flags 
                 trainer.prefer_strongest_move = 'AI_SCRIPT_PREFER_STRONGEST_MOVE' in ai_flags
                 trainer.prefer_baton_pass = 'AI_SCRIPT_PREFER_BATON_PASS' in ai_flags
-                trainer.hp_aware = True if 'AI_SCRIPT_HP_AWARE' in ai_flags else False
+                trainer.hp_aware = 'AI_SCRIPT_HP_AWARE' in ai_flags 
             elif tokens[0] == '.party':
                 party_id = tokens[-1].rstrip('},')
                 if party_id != "NULL":
