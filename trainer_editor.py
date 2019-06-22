@@ -8,7 +8,7 @@ import sys
 
 class Party:
     def __init__(self):
-        self.mons = [None, None, None, None, None, None]
+        self.mons = [None] * 6
         self._add_mon_index = 0
 
     def add_mon(self, mon):
@@ -17,9 +17,6 @@ class Party:
             sys.exit(1)
         self.mons[self._add_mon_index] = mon
         self._add_mon_index += 1
-
-    def set_mon(self, mon, position):
-        mons[position] = mon
 
     def get_mons_compact(self):
         return [ mon for mon in self.mons if mon is not None ]
@@ -51,7 +48,7 @@ class Party:
                 continue
             if has_moves:
                 if not hasattr(mon, 'moves'):
-                    mon.moves = ['MOVE_NONE', 'MOVE_NONE', 'MOVE_NONE', 'MOVE_NONE']
+                    mon.moves = ['MOVE_NONE'] * 4
             if has_items:
                 if not hasattr(mon, 'heldItem'):
                     mon.heldItem = 'ITEM_NONE'
@@ -59,7 +56,7 @@ class Party:
 class Trainer:
 
     def __init__(self):
-        self.items = [None, None, None, None]
+        self.items = [None] * 4
         self._add_item_index = 0
         self.trainer_class = 'TRAINER_CLASS_YOUNGSTER'
         self.music = 'TRAINER_ENCOUNTER_MUSIC_MALE'
@@ -133,7 +130,7 @@ class Mon:
 
     def set_move(self, move, position):
         if not self.has_moves():
-            self.moves = ['MOVE_NONE', 'MOVE_NONE', 'MOVE_NONE', 'MOVE_NONE']
+            self.moves = ['MOVE_NONE'] * 4
         self.moves[position] = move
 
     def add_item(self, item):
@@ -180,7 +177,7 @@ def get_trainers(parties):
             if line == '};\n':
                 break
             tokens = line.split()
-            if line == '\n' or tokens[0] == 'const' or tokens[0] == '{':
+            if line == '\n' or tokens[0] in ('const', '{'):
                 continue
             elif tokens[0] == '},':
                 trainers[trainer.identifier] = trainer
@@ -214,14 +211,14 @@ def get_trainers(parties):
                     if token == '|':
                         continue
                     ai_flags.append(token.rstrip(','))
-                trainer.check_bad_move = True if 'AI_SCRIPT_CHECK_BAD_MOVE' in ai_flags else False
-                trainer.try_to_faint = True if 'AI_SCRIPT_TRY_TO_FAINT' in ai_flags else False
-                trainer.check_viability = True if 'AI_SCRIPT_CHECK_VIABILITY' in ai_flags else False
-                trainer.setup_first_turn = True if 'AI_SCRIPT_SETUP_FIRST_TURN' in ai_flags else False
-                trainer.risky = True if 'AI_SCRIPT_RISKY' in ai_flags else False
-                trainer.prefer_strongest_move = True if 'AI_SCRIPT_PREFER_STRONGEST_MOVE' in ai_flags else False
-                trainer.prefer_baton_pass = True if 'AI_SCRIPT_PREFER_BATON_PASS' in ai_flags else False
-                trainer.hp_aware = True if 'AI_SCRIPT_HP_AWARE' in ai_flags else False
+                trainer.check_bad_move = 'AI_SCRIPT_CHECK_BAD_MOVE' in ai_flags 
+                trainer.try_to_faint = 'AI_SCRIPT_TRY_TO_FAINT' in ai_flags 
+                trainer.check_viability = 'AI_SCRIPT_CHECK_VIABILITY' in ai_flags 
+                trainer.setup_first_turn = 'AI_SCRIPT_SETUP_FIRST_TURN' in ai_flags
+                trainer.risky = 'AI_SCRIPT_RISKY' in ai_flags 
+                trainer.prefer_strongest_move = 'AI_SCRIPT_PREFER_STRONGEST_MOVE' in ai_flags
+                trainer.prefer_baton_pass = 'AI_SCRIPT_PREFER_BATON_PASS' in ai_flags
+                trainer.hp_aware = 'AI_SCRIPT_HP_AWARE' in ai_flags 
             elif tokens[0] == '.party':
                 party_id = tokens[-1].rstrip('},')
                 if party_id != "NULL":
